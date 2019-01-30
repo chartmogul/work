@@ -7,6 +7,13 @@ import (
 	"github.com/gomodule/redigo/redis"
 )
 
+const (
+	// ArgUniqueKeyExpire used to specify the number of seconds after which the unique key will expire.
+	ArgUniqueKeyExpire string = "unique_key_expire"
+
+	defaultUniqueKeyExpire int = 60 * 60 * 24 // 24 hours as default expiration
+)
+
 // Enqueuer can enqueue jobs.
 type Enqueuer struct {
 	Namespace string // eg, "myapp-work"
@@ -193,13 +200,19 @@ func (e *Enqueuer) uniqueJobHelper(jobName string, args map[string]interface{}, 
 		return nil, nil, err
 	}
 
+	uniqueKeyExpire, ok := args[ArgUniqueKeyExpire].(int)
+	if !ok {
+		uniqueKeyExpire = defaultUniqueKeyExpire
+	}
+
 	job := &Job{
-		Name:       jobName,
-		ID:         makeIdentifier(),
-		EnqueuedAt: nowEpochSeconds(),
-		Args:       args,
-		Unique:     true,
-		UniqueKey:  uniqueKey,
+		Name:            jobName,
+		ID:              makeIdentifier(),
+		EnqueuedAt:      nowEpochSeconds(),
+		Args:            args,
+		Unique:          true,
+		UniqueKey:       uniqueKey,
+		UniqueKeyExpire: uniqueKeyExpire,
 	}
 
 	rawJSON, err := job.serialize()
