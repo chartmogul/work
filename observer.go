@@ -58,6 +58,8 @@ type observation struct {
 	// If this is a checkin, set these.
 	checkin   string
 	checkinAt int64
+
+	expire int
 }
 
 const observerBufferSize = 1024
@@ -91,13 +93,14 @@ func (o *observer) drain() {
 	<-o.doneDrainingChan
 }
 
-func (o *observer) observeStarted(jobName, jobID string, arguments map[string]interface{}) {
+func (o *observer) observeStarted(jobName, jobID string, arguments map[string]interface{}, expire int) {
 	o.observationsChan <- &observation{
 		kind:      observationKindStarted,
 		jobName:   jobName,
 		jobID:     jobID,
 		startedAt: nowEpochSeconds(),
 		arguments: arguments,
+		expire:    expire,
 	}
 }
 
@@ -229,7 +232,7 @@ func (o *observer) writeStatus(obv *observation) error {
 		}
 
 		conn.Send("HMSET", args...)
-		conn.Send("EXPIRE", key, 60*60*24)
+		conn.Send("EXPIRE", key, obv.expire)
 		if err := conn.Flush(); err != nil {
 			return err
 		}
