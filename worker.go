@@ -205,7 +205,7 @@ func (w *worker) processJob(job *Job) {
 		runErr = fmt.Errorf("stray job: no handler")
 		logError("process_job.stray", runErr)
 	} else {
-		w.observeStarted(job.Name, job.ID, job.Args, job.KeyExpire)
+		w.observeStarted(job.Name, job.ID, job.Args)
 		job.observer = w.observer // for Checkin
 		_, runErr = runJob(job, w.contextType, w.middleware, jt)
 		w.observeDone(job.Name, job.ID, runErr)
