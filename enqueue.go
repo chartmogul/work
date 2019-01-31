@@ -8,10 +8,9 @@ import (
 )
 
 const (
-	// ArgUniqueKeyExpire used to specify the number of seconds after which the unique key will expire.
-	ArgUniqueKeyExpire string = "unique_key_expire"
-
-	defaultUniqueKeyExpire int = 60 * 60 * 24 // 24 hours as default expiration
+	// ArgKeyExpire used to specify the number of seconds after which a job key will expire in Redis.
+	ArgKeyExpire     string = "key_expire"
+	defaultKeyExpire int    = 60 * 60 * 24 // 24 hours as default expiration
 )
 
 // Enqueuer can enqueue jobs.
@@ -50,6 +49,7 @@ func (e *Enqueuer) Enqueue(jobName string, args map[string]interface{}) (*Job, e
 		ID:         makeIdentifier(),
 		EnqueuedAt: nowEpochSeconds(),
 		Args:       args,
+		KeyExpire:  getKeyExpire(args),
 	}
 
 	rawJSON, err := job.serialize()
@@ -78,6 +78,7 @@ func (e *Enqueuer) EnqueueIn(jobName string, secondsFromNow int64, args map[stri
 		ID:         makeIdentifier(),
 		EnqueuedAt: nowEpochSeconds(),
 		Args:       args,
+		KeyExpire:  getKeyExpire(args),
 	}
 
 	rawJSON, err := job.serialize()
@@ -200,19 +201,14 @@ func (e *Enqueuer) uniqueJobHelper(jobName string, args map[string]interface{}, 
 		return nil, nil, err
 	}
 
-	uniqueKeyExpire, ok := args[ArgUniqueKeyExpire].(int)
-	if !ok {
-		uniqueKeyExpire = defaultUniqueKeyExpire
-	}
-
 	job := &Job{
-		Name:            jobName,
-		ID:              makeIdentifier(),
-		EnqueuedAt:      nowEpochSeconds(),
-		Args:            args,
-		Unique:          true,
-		UniqueKey:       uniqueKey,
-		UniqueKeyExpire: uniqueKeyExpire,
+		Name:       jobName,
+		ID:         makeIdentifier(),
+		EnqueuedAt: nowEpochSeconds(),
+		Args:       args,
+		Unique:     true,
+		UniqueKey:  uniqueKey,
+		KeyExpire:  getKeyExpire(args),
 	}
 
 	rawJSON, err := job.serialize()
@@ -255,4 +251,18 @@ func (e *Enqueuer) uniqueJobHelper(jobName string, args map[string]interface{}, 
 	}
 
 	return enqueueFn, job, nil
+}
+
+func getKeyExpire(args map[string]interface{}) int {
+	iExpire, ok := args[ArgKeyExpire]
+	if !ok {
+		return defaultKeyExpire
+	}
+
+	expire, ok := iExpire.(int)
+	if !ok {
+		return defaultKeyExpire
+	}
+
+	return expire
 }
