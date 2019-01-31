@@ -59,6 +59,7 @@ type observation struct {
 	checkin   string
 	checkinAt int64
 
+	// The time in seconds after which the job key will be deleted in Redis
 	keyExpire int
 }
 
