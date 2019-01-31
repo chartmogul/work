@@ -7,10 +7,12 @@ import (
 	"github.com/gomodule/redigo/redis"
 )
 
+// DefaultKeyExpire default expiration time for a job key in Redis
+var DefaultKeyExpire = 60 * 60 * 24 // 24 hours as default
+
 const (
 	// ArgKeyExpire used to specify the number of seconds after which a job key will expire in Redis.
-	ArgKeyExpire     string = "key_expire"
-	defaultKeyExpire int    = 60 * 60 * 24 // 24 hours as default expiration
+	ArgKeyExpire string = "key_expire"
 )
 
 // Enqueuer can enqueue jobs.
@@ -256,12 +258,12 @@ func (e *Enqueuer) uniqueJobHelper(jobName string, args map[string]interface{}, 
 func getKeyExpire(args map[string]interface{}) int {
 	iExpire, ok := args[ArgKeyExpire]
 	if !ok {
-		return defaultKeyExpire
+		return DefaultKeyExpire
 	}
 
 	expire, ok := iExpire.(int)
 	if !ok {
-		return defaultKeyExpire
+		return DefaultKeyExpire
 	}
 
 	return expire
