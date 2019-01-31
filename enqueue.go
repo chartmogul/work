@@ -7,11 +7,12 @@ import (
 	"github.com/gomodule/redigo/redis"
 )
 
-const (
-	// ArgUniqueKeyExpire used to specify the number of seconds after which the unique key will expire.
-	ArgUniqueKeyExpire string = "unique_key_expire"
+// DefaultKeyExpire default expiration time for a job key in Redis
+var DefaultKeyExpire = 60 * 60 * 24 // 24 hours as default
 
-	defaultUniqueKeyExpire int = 60 * 60 * 24 // 24 hours as default expiration
+const (
+	// ArgKeyExpire used to specify the number of seconds after which a job key will expire in Redis.
+	ArgKeyExpire string = "key_expire"
 )
 
 // Enqueuer can enqueue jobs.
@@ -50,6 +51,7 @@ func (e *Enqueuer) Enqueue(jobName string, args map[string]interface{}) (*Job, e
 		ID:         makeIdentifier(),
 		EnqueuedAt: nowEpochSeconds(),
 		Args:       args,
+		KeyExpire:  getKeyExpire(args),
 	}
 
 	rawJSON, err := job.serialize()
@@ -78,6 +80,7 @@ func (e *Enqueuer) EnqueueIn(jobName string, secondsFromNow int64, args map[stri
 		ID:         makeIdentifier(),
 		EnqueuedAt: nowEpochSeconds(),
 		Args:       args,
+		KeyExpire:  getKeyExpire(args),
 	}
 
 	rawJSON, err := job.serialize()
@@ -200,19 +203,14 @@ func (e *Enqueuer) uniqueJobHelper(jobName string, args map[string]interface{}, 
 		return nil, nil, err
 	}
 
-	uniqueKeyExpire, ok := args[ArgUniqueKeyExpire].(int)
-	if !ok {
-		uniqueKeyExpire = defaultUniqueKeyExpire
-	}
-
 	job := &Job{
-		Name:            jobName,
-		ID:              makeIdentifier(),
-		EnqueuedAt:      nowEpochSeconds(),
-		Args:            args,
-		Unique:          true,
-		UniqueKey:       uniqueKey,
-		UniqueKeyExpire: uniqueKeyExpire,
+		Name:       jobName,
+		ID:         makeIdentifier(),
+		EnqueuedAt: nowEpochSeconds(),
+		Args:       args,
+		Unique:     true,
+		UniqueKey:  uniqueKey,
+		KeyExpire:  getKeyExpire(args),
 	}
 
 	rawJSON, err := job.serialize()
@@ -255,4 +253,18 @@ func (e *Enqueuer) uniqueJobHelper(jobName string, args map[string]interface{}, 
 	}
 
 	return enqueueFn, job, nil
+}
+
+func getKeyExpire(args map[string]interface{}) int {
+	iExpire, ok := args[ArgKeyExpire]
+	if !ok {
+		return DefaultKeyExpire
+	}
+
+	expire, ok := iExpire.(int)
+	if !ok {
+		return DefaultKeyExpire
+	}
+
+	return expire
 }
