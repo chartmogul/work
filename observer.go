@@ -58,9 +58,6 @@ type observation struct {
 	// If this is a checkin, set these.
 	checkin   string
 	checkinAt int64
-
-	// The time in seconds after which the job key will be deleted in Redis
-	keyExpire int
 }
 
 const observerBufferSize = 1024
@@ -94,14 +91,13 @@ func (o *observer) drain() {
 	<-o.doneDrainingChan
 }
 
-func (o *observer) observeStarted(jobName, jobID string, arguments map[string]interface{}, keyExpire int) {
+func (o *observer) observeStarted(jobName, jobID string, arguments map[string]interface{}) {
 	o.observationsChan <- &observation{
 		kind:      observationKindStarted,
 		jobName:   jobName,
 		jobID:     jobID,
 		startedAt: nowEpochSeconds(),
 		arguments: arguments,
-		keyExpire: keyExpire,
 	}
 }
 
@@ -232,7 +228,7 @@ func (o *observer) writeStatus(obv *observation) error {
 			)
 		}
 		conn.Send("HMSET", args...)
-		conn.Send("EXPIRE", key, obv.keyExpire)
+		conn.Send("EXPIRE", key, DefaultKeyExpire)
 		if err := conn.Flush(); err != nil {
 			return err
 		}
