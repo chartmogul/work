@@ -10,11 +10,6 @@ import (
 // DefaultKeyExpire default expiration time for a job key in Redis
 var DefaultKeyExpire = 60 * 60 * 24 // 24 hours as default
 
-const (
-	// ArgKeyExpire used to specify the number of seconds after which a job key will expire in Redis.
-	ArgKeyExpire string = "key_expire"
-)
-
 // Enqueuer can enqueue jobs.
 type Enqueuer struct {
 	Namespace string // eg, "myapp-work"
@@ -51,7 +46,6 @@ func (e *Enqueuer) Enqueue(jobName string, args map[string]interface{}) (*Job, e
 		ID:         makeIdentifier(),
 		EnqueuedAt: nowEpochSeconds(),
 		Args:       args,
-		KeyExpire:  getKeyExpire(args),
 	}
 
 	rawJSON, err := job.serialize()
@@ -80,7 +74,6 @@ func (e *Enqueuer) EnqueueIn(jobName string, secondsFromNow int64, args map[stri
 		ID:         makeIdentifier(),
 		EnqueuedAt: nowEpochSeconds(),
 		Args:       args,
-		KeyExpire:  getKeyExpire(args),
 	}
 
 	rawJSON, err := job.serialize()
@@ -210,7 +203,6 @@ func (e *Enqueuer) uniqueJobHelper(jobName string, args map[string]interface{}, 
 		Args:       args,
 		Unique:     true,
 		UniqueKey:  uniqueKey,
-		KeyExpire:  getKeyExpire(args),
 	}
 
 	rawJSON, err := job.serialize()
@@ -253,18 +245,4 @@ func (e *Enqueuer) uniqueJobHelper(jobName string, args map[string]interface{}, 
 	}
 
 	return enqueueFn, job, nil
-}
-
-func getKeyExpire(args map[string]interface{}) int {
-	iExpire, ok := args[ArgKeyExpire]
-	if !ok {
-		return DefaultKeyExpire
-	}
-
-	expire, ok := iExpire.(int)
-	if !ok {
-		return DefaultKeyExpire
-	}
-
-	return expire
 }
