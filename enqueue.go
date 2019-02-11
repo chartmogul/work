@@ -14,6 +14,7 @@ var DefaultKeyExpire = 60 * 60 * 24 // 24 hours as default
 type Enqueuer struct {
 	Namespace string // eg, "myapp-work"
 	Pool      *redis.Pool
+	Client    *Client // used in workers UI
 
 	queuePrefix           string // eg, "myapp-work:jobs:"
 	knownJobs             map[string]int64
@@ -23,7 +24,7 @@ type Enqueuer struct {
 }
 
 // NewEnqueuer creates a new enqueuer with the specified Redis namespace and Redis pool.
-func NewEnqueuer(namespace string, pool *redis.Pool) *Enqueuer {
+func NewEnqueuer(namespace string, pool *redis.Pool, client *Client) *Enqueuer {
 	if pool == nil {
 		panic("NewEnqueuer needs a non-nil *redis.Pool")
 	}
@@ -31,6 +32,7 @@ func NewEnqueuer(namespace string, pool *redis.Pool) *Enqueuer {
 	return &Enqueuer{
 		Namespace:             namespace,
 		Pool:                  pool,
+		Client:                client,
 		queuePrefix:           redisKeyJobsPrefix(namespace),
 		knownJobs:             make(map[string]int64),
 		enqueueUniqueScript:   redis.NewScript(2, redisLuaEnqueueUnique),
@@ -194,6 +196,17 @@ func (e *Enqueuer) uniqueJobHelper(jobName string, args map[string]interface{}, 
 	uniqueKey, err := redisKeyUniqueJob(e.Namespace, jobName, keyMap)
 	if err != nil {
 		return nil, nil, err
+	}
+
+	deadJob, err := e.Client.findDeadUniqeJob(uniqueKey)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if deadJob != nil { // unique job already exists, so we reschedule it
+		if err := e.Client.RetryDeadJob(deadJob.DiedAt, deadJob.ID); err != nil {
+			return nil, nil, err
+		}
 	}
 
 	job := &Job{

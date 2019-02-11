@@ -13,7 +13,7 @@ func TestEnqueue(t *testing.T) {
 	pool := newTestPool(":6379")
 	ns := "work"
 	cleanKeyspace(ns, pool)
-	enqueuer := NewEnqueuer(ns, pool)
+	enqueuer := NewEnqueuer(ns, pool, NewClient(ns, pool))
 	job, err := enqueuer.Enqueue("wat", Q{"a": 1, "b": "cool"})
 	assert.Nil(t, err)
 	assert.Equal(t, "wat", job.Name)
@@ -55,7 +55,7 @@ func TestEnqueueIn(t *testing.T) {
 	pool := newTestPool(":6379")
 	ns := "work"
 	cleanKeyspace(ns, pool)
-	enqueuer := NewEnqueuer(ns, pool)
+	enqueuer := NewEnqueuer(ns, pool, NewClient(ns, pool))
 
 	// Set to expired value to make sure we update the set of known jobs
 	enqueuer.knownJobs["wat"] = 4
@@ -102,7 +102,7 @@ func TestEnqueueUnique(t *testing.T) {
 	pool := newTestPool(":6379")
 	ns := "work"
 	cleanKeyspace(ns, pool)
-	enqueuer := NewEnqueuer(ns, pool)
+	enqueuer := NewEnqueuer(ns, pool, NewClient(ns, pool))
 	var mutex = &sync.Mutex{}
 	job, err := enqueuer.EnqueueUnique("wat", Q{"a": 1, "b": "cool"})
 	assert.NoError(t, err)
@@ -178,7 +178,7 @@ func TestEnqueueUniqueIn(t *testing.T) {
 	pool := newTestPool(":6379")
 	ns := "work"
 	cleanKeyspace(ns, pool)
-	enqueuer := NewEnqueuer(ns, pool)
+	enqueuer := NewEnqueuer(ns, pool, NewClient(ns, pool))
 
 	// Enqueue two unique jobs -- ensure one job sticks.
 	job, err := enqueuer.EnqueueUniqueIn("wat", 300, Q{"a": 1, "b": "cool"})
@@ -238,7 +238,7 @@ func TestEnqueueUniqueByKey(t *testing.T) {
 	pool := newTestPool(":6379")
 	ns := "work"
 	cleanKeyspace(ns, pool)
-	enqueuer := NewEnqueuer(ns, pool)
+	enqueuer := NewEnqueuer(ns, pool, NewClient(ns, pool))
 	var mutex = &sync.Mutex{}
 	job, err := enqueuer.EnqueueUniqueByKey("wat", Q{"a": 3, "b": "foo"}, Q{"key": "123"})
 	assert.NoError(t, err)
@@ -319,7 +319,7 @@ func EnqueueUniqueInByKey(t *testing.T) {
 	pool := newTestPool(":6379")
 	ns := "work"
 	cleanKeyspace(ns, pool)
-	enqueuer := NewEnqueuer(ns, pool)
+	enqueuer := NewEnqueuer(ns, pool, NewClient(ns, pool))
 
 	// Enqueue two unique jobs -- ensure one job sticks.
 	job, err := enqueuer.EnqueueUniqueInByKey("wat", 300, Q{"a": 1, "b": "cool"}, Q{"key": "123"})

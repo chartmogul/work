@@ -68,7 +68,7 @@ func TestClientWorkerObservations(t *testing.T) {
 	ns := "work"
 	cleanKeyspace(ns, pool)
 
-	enqueuer := NewEnqueuer(ns, pool)
+	enqueuer := NewEnqueuer(ns, pool, NewClient(ns, pool))
 	_, err := enqueuer.Enqueue("wat", Q{"a": 1, "b": 2})
 	assert.Nil(t, err)
 	_, err = enqueuer.Enqueue("foo", Q{"a": 3, "b": 4})
@@ -137,7 +137,7 @@ func TestClientQueues(t *testing.T) {
 	ns := "work"
 	cleanKeyspace(ns, pool)
 
-	enqueuer := NewEnqueuer(ns, pool)
+	enqueuer := NewEnqueuer(ns, pool, NewClient(ns, pool))
 	_, err := enqueuer.Enqueue("wat", nil)
 	_, err = enqueuer.Enqueue("foo", nil)
 	_, err = enqueuer.Enqueue("zaz", nil)
@@ -188,7 +188,7 @@ func TestClientScheduledJobs(t *testing.T) {
 	ns := "work"
 	cleanKeyspace(ns, pool)
 
-	enqueuer := NewEnqueuer(ns, pool)
+	enqueuer := NewEnqueuer(ns, pool, NewClient(ns, pool))
 
 	setNowEpochSecondsMock(1425263409)
 	defer resetNowEpochSecondsMock()
@@ -239,7 +239,7 @@ func TestClientRetryJobs(t *testing.T) {
 	setNowEpochSecondsMock(1425263409)
 	defer resetNowEpochSecondsMock()
 
-	enqueuer := NewEnqueuer(ns, pool)
+	enqueuer := NewEnqueuer(ns, pool, NewClient(ns, pool))
 	_, err := enqueuer.Enqueue("wat", Q{"a": 1, "b": 2})
 	assert.Nil(t, err)
 
@@ -278,7 +278,7 @@ func TestClientDeadJobs(t *testing.T) {
 	setNowEpochSecondsMock(1425263409)
 	defer resetNowEpochSecondsMock()
 
-	enqueuer := NewEnqueuer(ns, pool)
+	enqueuer := NewEnqueuer(ns, pool, NewClient(ns, pool))
 	_, err := enqueuer.Enqueue("wat", Q{"a": 1, "b": 2})
 	assert.Nil(t, err)
 
@@ -331,10 +331,10 @@ func TestClientDeleteDeadJob(t *testing.T) {
 	cleanKeyspace(ns, pool)
 
 	// Insert a dead job:
-	insertDeadJob(ns, pool, "wat", 12345, 12347)
-	insertDeadJob(ns, pool, "wat", 12345, 12347)
-	insertDeadJob(ns, pool, "wat", 12345, 12349)
-	insertDeadJob(ns, pool, "wat", 12345, 12350)
+	insertDeadJob(ns, pool, "wat", 12345, 12347, "")
+	insertDeadJob(ns, pool, "wat", 12345, 12347, "")
+	insertDeadJob(ns, pool, "wat", 12345, 12349, "")
+	insertDeadJob(ns, pool, "wat", 12345, 12350, "")
 
 	client := NewClient(ns, pool)
 	jobs, count, err := client.DeadJobs(1)
@@ -360,10 +360,10 @@ func TestClientRetryDeadJob(t *testing.T) {
 	cleanKeyspace(ns, pool)
 
 	// Insert a dead job:
-	insertDeadJob(ns, pool, "wat1", 12345, 12347)
-	insertDeadJob(ns, pool, "wat2", 12345, 12347)
-	insertDeadJob(ns, pool, "wat3", 12345, 12349)
-	insertDeadJob(ns, pool, "wat4", 12345, 12350)
+	insertDeadJob(ns, pool, "wat1", 12345, 12347, "")
+	insertDeadJob(ns, pool, "wat2", 12345, 12347, "")
+	insertDeadJob(ns, pool, "wat3", 12345, 12349, "")
+	insertDeadJob(ns, pool, "wat4", 12345, 12350, "")
 
 	client := NewClient(ns, pool)
 	jobs, count, err := client.DeadJobs(1)
@@ -460,10 +460,10 @@ func TestClientDeleteAllDeadJobs(t *testing.T) {
 	cleanKeyspace(ns, pool)
 
 	// Insert a dead job:
-	insertDeadJob(ns, pool, "wat", 12345, 12347)
-	insertDeadJob(ns, pool, "wat", 12345, 12347)
-	insertDeadJob(ns, pool, "wat", 12345, 12349)
-	insertDeadJob(ns, pool, "wat", 12345, 12350)
+	insertDeadJob(ns, pool, "wat", 12345, 12347, "")
+	insertDeadJob(ns, pool, "wat", 12345, 12347, "")
+	insertDeadJob(ns, pool, "wat", 12345, 12349, "")
+	insertDeadJob(ns, pool, "wat", 12345, 12350, "")
 
 	client := NewClient(ns, pool)
 	jobs, count, err := client.DeadJobs(1)
@@ -488,10 +488,10 @@ func TestClientRetryAllDeadJobs(t *testing.T) {
 	setNowEpochSecondsMock(1425263409)
 	defer resetNowEpochSecondsMock()
 
-	insertDeadJob(ns, pool, "wat1", 12345, 12347)
-	insertDeadJob(ns, pool, "wat2", 12345, 12347)
-	insertDeadJob(ns, pool, "wat3", 12345, 12349)
-	insertDeadJob(ns, pool, "wat4", 12345, 12350)
+	insertDeadJob(ns, pool, "wat1", 12345, 12347, "")
+	insertDeadJob(ns, pool, "wat2", 12345, 12347, "")
+	insertDeadJob(ns, pool, "wat3", 12345, 12349, "")
+	insertDeadJob(ns, pool, "wat4", 12345, 12350, "")
 
 	client := NewClient(ns, pool)
 	jobs, count, err := client.DeadJobs(1)
@@ -618,7 +618,7 @@ func TestClientDeleteScheduledJob(t *testing.T) {
 	assert.Equal(t, ErrNotDeleted, err)
 
 	// Schedule a job. Delete it.
-	enq := NewEnqueuer(ns, pool)
+	enq := NewEnqueuer(ns, pool, NewClient(ns, pool))
 	j, err := enq.EnqueueIn("foo", 10, nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, j)
@@ -634,7 +634,7 @@ func TestClientDeleteScheduledUniqueJob(t *testing.T) {
 	cleanKeyspace(ns, pool)
 
 	// Schedule a unique job. Delete it. Ensure we can schedule it again.
-	enq := NewEnqueuer(ns, pool)
+	enq := NewEnqueuer(ns, pool, NewClient(ns, pool))
 	j, err := enq.EnqueueUniqueIn("foo", 10, nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, j)
@@ -657,7 +657,7 @@ func TestClientDeleteRetryJob(t *testing.T) {
 	setNowEpochSecondsMock(1425263409)
 	defer resetNowEpochSecondsMock()
 
-	enqueuer := NewEnqueuer(ns, pool)
+	enqueuer := NewEnqueuer(ns, pool, NewClient(ns, pool))
 	job, err := enqueuer.Enqueue("wat", Q{"a": 1, "b": 2})
 	assert.Nil(t, err)
 
@@ -683,7 +683,30 @@ func TestClientDeleteRetryJob(t *testing.T) {
 	}
 }
 
-func insertDeadJob(ns string, pool *redis.Pool, name string, encAt, failAt int64) *Job {
+func TestFindDeadUniqeJob(t *testing.T) {
+	pool := newTestPool(":6379")
+	ns := "testwork"
+	cleanKeyspace(ns, pool)
+
+	insertDeadJob(ns, pool, "wat", 12345, 12347, "key-1")
+	insertDeadJob(ns, pool, "wat", 12345, 12347, "key-2")
+
+	client := NewClient(ns, pool)
+	deadJob2, err := client.findDeadUniqeJob("key-2")
+	assert.NoError(t, err)
+	assert.NotNil(t, deadJob2)
+
+	deadJob3, err := client.findDeadUniqeJob("key-3")
+	assert.NoError(t, err)
+	assert.Nil(t, deadJob3)
+}
+
+func insertDeadJob(ns string, pool *redis.Pool, name string, encAt, failAt int64, uniqueKey string) *Job {
+	unique := false
+	if uniqueKey != "" {
+		unique = true
+	}
+
 	job := &Job{
 		Name:       name,
 		ID:         makeIdentifier(),
@@ -692,6 +715,8 @@ func insertDeadJob(ns string, pool *redis.Pool, name string, encAt, failAt int64
 		Fails:      3,
 		LastErr:    "sorry",
 		FailedAt:   failAt,
+		Unique:     unique,
+		UniqueKey:  uniqueKey,
 	}
 
 	rawJSON, _ := job.serialize()

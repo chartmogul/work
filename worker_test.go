@@ -53,7 +53,7 @@ func TestWorkerBasics(t *testing.T) {
 		},
 	}
 
-	enqueuer := NewEnqueuer(ns, pool)
+	enqueuer := NewEnqueuer(ns, pool, NewClient(ns, pool))
 	_, err := enqueuer.Enqueue(job1, Q{"a": 1})
 	assert.Nil(t, err)
 	_, err = enqueuer.Enqueue(job2, Q{"a": 2})
@@ -107,7 +107,7 @@ func TestWorkerInProgress(t *testing.T) {
 		},
 	}
 
-	enqueuer := NewEnqueuer(ns, pool)
+	enqueuer := NewEnqueuer(ns, pool, NewClient(ns, pool))
 	_, err := enqueuer.Enqueue(job1, Q{"a": 1})
 	assert.Nil(t, err)
 
@@ -159,7 +159,7 @@ func TestWorkerRetry(t *testing.T) {
 		},
 	}
 
-	enqueuer := NewEnqueuer(ns, pool)
+	enqueuer := NewEnqueuer(ns, pool, NewClient(ns, pool))
 	_, err := enqueuer.Enqueue(job1, Q{"a": 1})
 	assert.Nil(t, err)
 	w := newWorker(ns, "1", pool, tstCtxType, nil, jobTypes, nil)
@@ -211,7 +211,7 @@ func TestWorkerRetryWithCustomBackoff(t *testing.T) {
 		},
 	}
 
-	enqueuer := NewEnqueuer(ns, pool)
+	enqueuer := NewEnqueuer(ns, pool, NewClient(ns, pool))
 	_, err := enqueuer.Enqueue(job1, Q{"a": 1})
 	assert.Nil(t, err)
 	w := newWorker(ns, "1", pool, tstCtxType, nil, jobTypes, nil)
@@ -266,7 +266,7 @@ func TestWorkerDead(t *testing.T) {
 		},
 	}
 
-	enqueuer := NewEnqueuer(ns, pool)
+	enqueuer := NewEnqueuer(ns, pool, NewClient(ns, pool))
 	_, err := enqueuer.Enqueue(job1, nil)
 	assert.Nil(t, err)
 	_, err = enqueuer.Enqueue(job2, nil)
@@ -320,7 +320,7 @@ func TestWorkersPaused(t *testing.T) {
 		},
 	}
 
-	enqueuer := NewEnqueuer(ns, pool)
+	enqueuer := NewEnqueuer(ns, pool, NewClient(ns, pool))
 	_, err := enqueuer.Enqueue(job1, Q{"a": 1})
 	assert.Nil(t, err)
 
@@ -384,7 +384,7 @@ func BenchmarkJobProcessing(b *testing.B) {
 	pool := newTestPool(":6379")
 	ns := "work"
 	cleanKeyspace(ns, pool)
-	enqueuer := NewEnqueuer(ns, pool)
+	enqueuer := NewEnqueuer(ns, pool, NewClient(ns, pool))
 
 	for i := 0; i < b.N; i++ {
 		_, err := enqueuer.Enqueue("wat", nil)
@@ -611,7 +611,7 @@ func TestWorkerPoolStop(t *testing.T) {
 		return nil
 	})
 
-	var enqueuer = NewEnqueuer(ns, pool)
+	var enqueuer = NewEnqueuer(ns, pool, NewClient(ns, pool))
 
 	for i := 0; i <= num_iters; i++ {
 		enqueuer.Enqueue("sample_job", Q{})

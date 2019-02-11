@@ -515,6 +515,29 @@ func (c *Client) DeleteRetryJob(retryAt int64, jobID string) error {
 	return nil
 }
 
+// findDeadUniqeJob detects if the given unique job already exists but it is dead.
+func (c *Client) findDeadUniqeJob(uniqueKey string) (*DeadJob, error) {
+	page := uint(1)
+	for ; ; page++ {
+		deadJobsBatch, count, err := c.DeadJobs(page)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, deadJob := range deadJobsBatch {
+			if deadJob.Unique && deadJob.UniqueKey == uniqueKey {
+				return deadJob, nil
+			}
+		}
+
+		if count < 20 { // each page has 20 items
+			break
+		}
+	}
+
+	return nil, nil
+}
+
 // deleteZsetJob deletes the job in the specified zset (dead, retry, or scheduled queue). zsetKey is like "work:dead" or "work:scheduled". The function deletes all jobs with the given jobID with the specified zscore (there should only be one, but in theory there could be bad data). It will return if at least one job is deleted and if
 func (c *Client) deleteZsetJob(zsetKey string, zscore int64, jobID string) (bool, []byte, error) {
 	script := redis.NewScript(1, redisLuaDeleteSingleCmd)

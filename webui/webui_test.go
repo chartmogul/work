@@ -32,7 +32,7 @@ func TestWebUIQueues(t *testing.T) {
 	cleanKeyspace(ns, pool)
 
 	// Get some stuff to to show up in the jobs:
-	enqueuer := work.NewEnqueuer(ns, pool)
+	enqueuer := work.NewEnqueuer(ns, pool, NewClient(ns, pool))
 	_, err := enqueuer.Enqueue("wat", nil)
 	assert.NoError(t, err)
 	enqueuer.Enqueue("foo", nil)
@@ -160,7 +160,7 @@ func TestWebUIBusyWorkers(t *testing.T) {
 	wgroup.Add(1)
 
 	// Ok, now let's make a busy worker
-	enqueuer := work.NewEnqueuer(ns, pool)
+	enqueuer := work.NewEnqueuer(ns, pool, NewClient(ns, pool))
 	enqueuer.Enqueue("wat", nil)
 	wgroup2.Wait()
 	time.Sleep(5 * time.Millisecond) // need to let obsever process
@@ -187,7 +187,7 @@ func TestWebUIRetryJobs(t *testing.T) {
 	ns := "work"
 	cleanKeyspace(ns, pool)
 
-	enqueuer := work.NewEnqueuer(ns, pool)
+	enqueuer := work.NewEnqueuer(ns, pool, NewClient(ns, pool))
 	_, err := enqueuer.Enqueue("wat", nil)
 	assert.Nil(t, err)
 
@@ -230,7 +230,7 @@ func TestWebUIScheduledJobs(t *testing.T) {
 	ns := "testwork"
 	cleanKeyspace(ns, pool)
 
-	enqueuer := work.NewEnqueuer(ns, pool)
+	enqueuer := work.NewEnqueuer(ns, pool, NewClient(ns, pool))
 	_, err := enqueuer.EnqueueIn("watter", 1, nil)
 	assert.Nil(t, err)
 
@@ -263,7 +263,7 @@ func TestWebUIDeadJobs(t *testing.T) {
 	ns := "testwork"
 	cleanKeyspace(ns, pool)
 
-	enqueuer := work.NewEnqueuer(ns, pool)
+	enqueuer := work.NewEnqueuer(ns, pool, NewClient(ns, pool))
 	_, err := enqueuer.Enqueue("wat", nil)
 	_, err = enqueuer.Enqueue("wat", nil)
 	assert.Nil(t, err)
@@ -351,7 +351,7 @@ func TestWebUIDeadJobsDeleteRetryAll(t *testing.T) {
 	ns := "testwork"
 	cleanKeyspace(ns, pool)
 
-	enqueuer := work.NewEnqueuer(ns, pool)
+	enqueuer := work.NewEnqueuer(ns, pool, NewClient(ns, pool))
 	_, err := enqueuer.Enqueue("wat", nil)
 	_, err = enqueuer.Enqueue("wat", nil)
 	assert.Nil(t, err)

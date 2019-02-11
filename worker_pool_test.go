@@ -122,7 +122,7 @@ func TestWorkersPoolRunSingleThreaded(t *testing.T) {
 	wp := setupTestWorkerPool(pool, ns, job1, concurrency, JobOptions{Priority: 1, MaxConcurrency: 1})
 	wp.Start()
 	// enqueue some jobs
-	enqueuer := NewEnqueuer(ns, pool)
+	enqueuer := NewEnqueuer(ns, pool, NewClient(ns, pool))
 	for i := 0; i < numJobs; i++ {
 		_, err := enqueuer.Enqueue(job1, Q{"sleep": sleepTime})
 		assert.Nil(t, err)
@@ -164,7 +164,7 @@ func TestWorkerPoolPauseSingleThreadedJobs(t *testing.T) {
 	wp := setupTestWorkerPool(pool, ns, job1, concurrency, JobOptions{Priority: 1, MaxConcurrency: 1})
 	wp.Start()
 	// enqueue some jobs
-	enqueuer := NewEnqueuer(ns, pool)
+	enqueuer := NewEnqueuer(ns, pool, NewClient(ns, pool))
 	for i := 0; i < numJobs; i++ {
 		_, err := enqueuer.Enqueue(job1, Q{"sleep": sleepTime})
 		assert.Nil(t, err)
