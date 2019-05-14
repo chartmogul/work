@@ -432,7 +432,12 @@ func isValidMiddlewareType(ctxType reflect.Type, vfn reflect.Value) bool {
 			return false
 		}
 	} else if numIn == 3 {
-		if fnType.In(0) != reflect.PtrTo(ctxType) {
+		//if middleware context is an interface
+		if fnType.In(0).Kind() == reflect.Interface && !reflect.PtrTo(ctxType).Implements(fnType.In(0)) {
+			return false
+		}
+		// if middlware context is not an interface
+		if fnType.In(0).Kind() != reflect.Interface && fnType.In(0) != reflect.PtrTo(ctxType) {
 			return false
 		}
 		if fnType.In(1) != reflect.TypeOf(j) {
