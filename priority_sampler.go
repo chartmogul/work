@@ -55,6 +55,9 @@ func (s *prioritySampler) sample() []sampleItem {
 	//     and see where the random number fits in the continuum.
 	//     If we find where it fits, sort the item to the next slot towards the front of the slice.
 	for remaining > 1 {
+		if sumRemaining == 0 {
+			break
+		}
 		// rn from [0 to sumRemaining)
 		rn := uint(rand.Uint32()) % sumRemaining
 
