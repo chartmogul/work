@@ -171,6 +171,9 @@ func (wp *WorkerPool) JobWithOptions(name string, jobOpts JobOptions, fn interfa
 	for _, w := range wp.workers {
 		w.updateMiddlewareAndJobTypes(wp.middleware, wp.jobTypes)
 	}
+	if wp.started {
+		wp.writeConcurrencyControlsToRedis(map[string]*jobType{name: jt})
+	}
 
 	return wp
 }
@@ -200,7 +203,7 @@ func (wp *WorkerPool) Start() {
 	wp.started = true
 
 	// TODO: we should cleanup stale keys on startup from previously registered jobs
-	wp.writeConcurrencyControlsToRedis()
+	wp.writeConcurrencyControlsToRedis(wp.jobTypes)
 	go wp.writeKnownJobsToRedis()
 
 	for _, w := range wp.workers {
@@ -291,14 +294,14 @@ func (wp *WorkerPool) writeKnownJobsToRedis() {
 	}
 }
 
-func (wp *WorkerPool) writeConcurrencyControlsToRedis() {
-	if len(wp.jobTypes) == 0 {
+func (wp *WorkerPool) writeConcurrencyControlsToRedis(jobTypes map[string]*jobType) {
+	if len(jobTypes) == 0 {
 		return
 	}
 
 	conn := wp.pool.Get()
 	defer conn.Close()
-	for jobName, jobType := range wp.jobTypes {
+	for jobName, jobType := range jobTypes {
 		if _, err := conn.Do("SET", redisKeyJobsConcurrency(wp.namespace, jobName), jobType.MaxConcurrency); err != nil {
 			logError("write_concurrency_controls_max_concurrency", err)
 		}
