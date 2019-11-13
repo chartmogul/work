@@ -30,6 +30,7 @@ type WorkerPool struct {
 	scheduler        *requeuer
 	deadPoolReaper   *deadPoolReaper
 	periodicEnqueuer *periodicEnqueuer
+	mu               *sync.Mutex
 }
 
 type jobType struct {
@@ -106,6 +107,7 @@ func NewWorkerPoolWithOptions(ctx interface{}, concurrency uint, namespace strin
 		sleepBackoffs: workerPoolOpts.SleepBackoffs,
 		contextType:   ctxType,
 		jobTypes:      make(map[string]*jobType),
+		mu:            &sync.Mutex{},
 	}
 
 	for i := uint(0); i < wp.concurrency; i++ {
@@ -173,6 +175,9 @@ func (wp *WorkerPool) JobWithOptions(name string, jobOpts JobOptions, fn interfa
 	}
 	if wp.started {
 		wp.writeConcurrencyControlsToRedis(map[string]*jobType{name: jt})
+		wp.mu.Lock()
+		wp.heartbeater.jobNames += "," + name
+		wp.mu.Unlock()
 	}
 
 	return wp
