@@ -176,7 +176,18 @@ func (wp *WorkerPool) JobWithOptions(name string, jobOpts JobOptions, fn interfa
 	if wp.started {
 		wp.writeConcurrencyControlsToRedis(map[string]*jobType{name: jt})
 		wp.mu.Lock()
-		wp.heartbeater.jobNames += "," + name
+		jobNames := strings.Split(wp.heartbeater.jobNames, ",")
+		exists := false
+		for _, job := range jobNames {
+			if job == name {
+				exists = true
+				break
+			}
+		}
+
+		if !exists {
+			wp.heartbeater.jobNames += "," + name
+		}
 		wp.mu.Unlock()
 	}
 
