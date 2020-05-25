@@ -5,3 +5,11 @@ services:
 
 go:
   - 1.14.x
+
+# The following is just testing, you must commit the built files to gain any effect.
+script:
+  - go test ./...
+  - cd ./webui/internal/assets && yarn install && yarn test
+  - yarn build
+  - go get -u github.com/jteeuwen/go-bindata/...
+  - go generate

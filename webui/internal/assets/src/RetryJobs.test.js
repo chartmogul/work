@@ -13,8 +13,8 @@ describe('RetryJobs', () => {
     retryJobs.setState({
       count: 2,
       jobs: [
-        {id: 1, name: 'test', args: {}, t: 1467760821, err: 'err1'},
-        {id: 2, name: 'test2', args: {}, t: 1467760822, err: 'err2'}
+        {id: 1, name: 'test', args: {}, retry_at: 1467760821, err: 'err1'},
+        {id: 2, name: 'test2', args: {}, retry_at: 1467760822, err: 'err2'}
       ]
     });
 
@@ -31,7 +31,7 @@ describe('RetryJobs', () => {
           id: i,
           name: 'test',
           args: {},
-          t: 1467760821,
+          retry_at: 1467760821,
           err: 'err',
         });
       }
