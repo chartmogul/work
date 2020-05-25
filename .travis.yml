@@ -1,4 +1,7 @@
 language: go
 
+services:
+  - redis
+
 go:
   - 1.14.x
