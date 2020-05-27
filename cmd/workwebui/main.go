@@ -17,16 +17,20 @@ var (
 	redisDatabase  = flag.String("database", "0", "redis database")
 	redisNamespace = flag.String("ns", "work", "redis namespace")
 	webHostPort    = flag.String("listen", ":5040", "hostport to listen for HTTP JSON API")
+	debug          = flag.Bool("debug", false, "enable additional logging")
 )
 
 func main() {
 	flag.Parse()
 
 	fmt.Println("Starting workwebui:")
-	fmt.Println("redis = ", *redisHostPort)
-	fmt.Println("database = ", *redisDatabase)
-	fmt.Println("namespace = ", *redisNamespace)
-	fmt.Println("listen = ", *webHostPort)
+
+	if *debug == true {
+		fmt.Println("redis = ", *redisHostPort)
+		fmt.Println("database = ", *redisDatabase)
+		fmt.Println("namespace = ", *redisNamespace)
+		fmt.Println("listen = ", *webHostPort)
+	}
 
 	database, err := strconv.Atoi(*redisDatabase)
 	if err != nil {
