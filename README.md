@@ -260,6 +260,9 @@ You'll see a view that looks like this:
 
 ![Web UI Screenshot](https://gocraft.github.io/work/images/webui.png)
 
+## YARN
+Avoid using `latest` as package version in `package.json`. Doing `yarn install` will update `yarn.lock` if a package has new version since the last time `yarn install` was performed.
+
 ## Design and concepts
 
 ### Enqueueing jobs
