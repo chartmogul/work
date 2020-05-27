@@ -18,7 +18,7 @@ func TestObserverStarted(t *testing.T) {
 
 	observer := newObserver(ns, pool, "abcd")
 	observer.start()
-	observer.observeStarted("foo", "bar", Q{"a": 1, "b": "wat"}, 60*60*24)
+	observer.observeStarted("foo", "bar", Q{"a": 1, "b": "wat"})
 	//observer.observeDone("foo", "bar", nil)
 	observer.drain()
 	observer.stop()
@@ -40,7 +40,7 @@ func TestObserverStartedDone(t *testing.T) {
 
 	observer := newObserver(ns, pool, "abcd")
 	observer.start()
-	observer.observeStarted("foo", "bar", Q{"a": 1, "b": "wat"}, 60*60*24)
+	observer.observeStarted("foo", "bar", Q{"a": 1, "b": "wat"})
 	observer.observeDone("foo", "bar", nil)
 	observer.drain()
 	observer.stop()
@@ -59,7 +59,7 @@ func TestObserverCheckin(t *testing.T) {
 	tMock := int64(1425263401)
 	setNowEpochSecondsMock(tMock)
 	defer resetNowEpochSecondsMock()
-	observer.observeStarted("foo", "bar", Q{"a": 1, "b": "wat"}, 60*60*24)
+	observer.observeStarted("foo", "bar", Q{"a": 1, "b": "wat"})
 
 	tMockCheckin := int64(1425263402)
 	setNowEpochSecondsMock(tMockCheckin)
@@ -86,7 +86,7 @@ func TestObserverCheckinFromJob(t *testing.T) {
 	tMock := int64(1425263401)
 	setNowEpochSecondsMock(tMock)
 	defer resetNowEpochSecondsMock()
-	observer.observeStarted("foo", "barbar", Q{"a": 1, "b": "wat"}, 60*60*24)
+	observer.observeStarted("foo", "barbar", Q{"a": 1, "b": "wat"})
 
 	tMockCheckin := int64(1425263402)
 	setNowEpochSecondsMock(tMockCheckin)

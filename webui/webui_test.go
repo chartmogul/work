@@ -163,7 +163,7 @@ func TestWebUIBusyWorkers(t *testing.T) {
 	enqueuer := work.NewEnqueuer(ns, pool)
 	enqueuer.Enqueue("wat", nil)
 	wgroup2.Wait()
-	time.Sleep(5 * time.Millisecond) // need to let obsever process
+	time.Sleep(100 * time.Millisecond) // need to let obsever process
 
 	recorder = httptest.NewRecorder()
 	request, _ = http.NewRequest("GET", "/busy_workers", nil)
