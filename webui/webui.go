@@ -9,8 +9,8 @@ import (
 
 	"github.com/braintree/manners"
 	"github.com/gocraft/web"
-	"github.com/gocraft/work"
-	"github.com/gocraft/work/webui/internal/assets"
+	"github.com/chartmogul/work"
+	"github.com/chartmogul/work/webui/internal/assets"
 	"github.com/gomodule/redigo/redis"
 )
 

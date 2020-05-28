@@ -1,4 +1,4 @@
-# gocraft/work [![GoDoc](https://godoc.org/github.com/gocraft/work?status.png)](https://godoc.org/github.com/gocraft/work)
+# gocraft/work [![GoDoc](https://godoc.org/github.com/chartmogul/work?status.png)](https://godoc.org/github.com/chartmogul/work)
 
 gocraft/work lets you enqueue and processes background jobs in Go. Jobs are durable and backed by Redis. Very similar to Sidekiq for Go.
 
@@ -21,7 +21,7 @@ package main
 
 import (
 	"github.com/gomodule/redigo/redis"
-	"github.com/gocraft/work"
+	"github.com/chartmogul/work"
 )
 
 // Make a redis pool
@@ -57,7 +57,7 @@ package main
 
 import (
 	"github.com/gomodule/redigo/redis"
-	"github.com/gocraft/work"
+	"github.com/chartmogul/work"
 	"os"
 	"os/signal"
 )
@@ -245,8 +245,8 @@ The web UI provides a view to view the state of your gocraft/work cluster, inspe
 
 Building an installing the binary:
 ```bash
-go get github.com/gocraft/work/cmd/workwebui
-go install github.com/gocraft/work/cmd/workwebui
+go get github.com/chartmogul/work/cmd/workwebui
+go install github.com/chartmogul/work/cmd/workwebui
 ```
 
 Then, you can run it:
