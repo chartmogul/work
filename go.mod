@@ -19,6 +19,7 @@ require (
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b // indirect
 	github.com/gomodule/redigo v2.0.0+incompatible
 	github.com/jrallison/go-workers v0.0.0-20180112190529-dbf81d0b75bb
+	github.com/jteeuwen/go-bindata v3.0.7+incompatible // indirect
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/orfjackal/nanospec.go v0.0.0-20120727230329-de4694c1d701 // indirect
 	github.com/robfig/cron/v3 v3.0.1
@@ -27,5 +28,3 @@ require (
 	golang.org/x/net v0.0.0-20200520182314-0ba52f642ac2 // indirect
 	gopkg.in/yaml.v2 v2.3.0 // indirect
 )
-
-replace github.com/gocraft/work => github.com/chartmogul/work v1.0.0-patched.12
