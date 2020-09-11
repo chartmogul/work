@@ -1,12 +1,12 @@
 package work
 
 import (
+	"errors"
 	"fmt"
+	"github.com/gomodule/redigo/redis"
 	"math/rand"
 	"reflect"
 	"time"
-
-	"github.com/gomodule/redigo/redis"
 )
 
 const fetchKeysPerJobType = 6
@@ -190,6 +190,9 @@ func (w *worker) fetchJob() (*Job, error) {
 }
 
 func (w *worker) processJob(job *Job) {
+	// Enforce job status update for unhandled panics
+	defer w.removeJobInProgressEnforcer(job)
+
 	if job.Unique {
 		updatedJob := w.getAndDeleteUniqueJob(job)
 		// This is to support the old way of doing it, where we used the job off the queue and just deleted the unique key
@@ -211,12 +214,31 @@ func (w *worker) processJob(job *Job) {
 		w.observeDone(job.Name, job.ID, runErr)
 	}
 
+	// Update job status if there was no panic during execution of the job.
+	fate := w.determineFate(job, jt, runErr)
+	w.removeJobFromInProgress(job, fate)
+}
+
+func (w *worker) determineFate(job *Job, jt *jobType, err error) terminateOp {
 	fate := terminateOnly
-	if runErr != nil {
-		job.failed(runErr)
+	if err != nil {
+		job.failed(err)
 		fate = w.jobFate(jt, job)
 	}
-	w.removeJobFromInProgress(job, fate)
+
+	return fate
+}
+
+func (w *worker) removeJobInProgressEnforcer(job *Job) {
+	// does nothing if panic is handled before
+	if errMsg := recover(); errMsg != nil {
+		formattedErr := errors.New(errMsg.(string))
+		logError("process_job.fatal_error", formattedErr)
+		jt := w.jobTypes[job.Name]
+		fate := w.determineFate(job, jt, formattedErr)
+
+		w.removeJobFromInProgress(job, fate)
+	}
 }
 
 func (w *worker) getAndDeleteUniqueJob(job *Job) *Job {
